@@ -5,6 +5,9 @@ from app.models.schemas import ProjectData, CanvasNode, Document
 DATA_DIR = Path(__file__).parent.parent.parent / "data"
 DATA_FILE = DATA_DIR / "project.json"
 
+# STATE.json lives in the project root (parent of backend/)
+STATE_FILE = Path(__file__).parent.parent.parent.parent / "STATE.json"
+
 
 def _ensure_dir():
     DATA_DIR.mkdir(parents=True, exist_ok=True)
@@ -73,3 +76,19 @@ def update_document(content: dict) -> Document:
     project.document = Document(content=content)
     save_project(project)
     return project.document
+
+
+# --- State snapshot operations ---
+
+def save_state_snapshot():
+    """Save current project data to STATE.json in project root."""
+    project = load_project()
+    STATE_FILE.write_text(project.model_dump_json(indent=2))
+
+
+def load_state_snapshot():
+    """If STATE.json exists, load it into data/project.json."""
+    if STATE_FILE.exists():
+        raw = json.loads(STATE_FILE.read_text())
+        project = ProjectData.model_validate(raw)
+        save_project(project)

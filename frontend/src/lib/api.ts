@@ -92,3 +92,10 @@ export async function aiRewrite(
   });
   return res.json();
 }
+
+// --- State ---
+
+export async function saveState(): Promise<{ status: string }> {
+  const res = await fetch(`${API}/state/save`, { method: "POST" });
+  return res.json();
+}

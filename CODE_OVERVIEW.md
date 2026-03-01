@@ -9,22 +9,24 @@ writing_canvas/
 ├── specs/              # Product specs and requirements
 │   └── overview.md     # High-level product vision
 ├── plans/              # Implementation plans
+├── STATE.json          # Canvas state snapshot (git-trackable, created via Save State button)
 ├── backend/            # Python/FastAPI backend
 │   ├── pyproject.toml  # Dependencies managed by uv
 │   ├── .env            # API keys (gitignored)
 │   ├── data/           # JSON persistence (gitignored, auto-created)
 │   │   └── project.json
 │   └── app/
-│       ├── main.py         # FastAPI app, CORS middleware, router registration
+│       ├── main.py         # FastAPI app, CORS middleware, lifespan handler, router registration
 │       ├── models/
 │       │   └── schemas.py  # Pydantic models: CanvasNode, Document, ProjectData
 │       ├── routers/
 │       │   ├── health.py   # GET /health
 │       │   ├── nodes.py    # CRUD: GET/POST/PUT/DELETE /nodes
 │       │   ├── document.py # GET/PUT /document (TipTap JSON)
-│       │   └── ai.py       # POST /ai/suggest, POST /ai/rewrite
+│       │   ├── ai.py       # POST /ai/suggest, POST /ai/rewrite
+│       │   └── state.py    # POST /state/save (snapshot to STATE.json)
 │       └── services/
-│           ├── storage.py  # JSON-file persistence for nodes + document
+│           ├── storage.py  # JSON-file persistence for nodes + document + state snapshots
 │           └── ai.py       # Gemini Flash (suggest) + Claude Opus (rewrite)
 ├── frontend/           # Next.js/React frontend
 │   ├── package.json
@@ -80,8 +82,9 @@ A segmented control in the top-left of the canvas lets users filter by abstracti
 
 ### Persistence
 - Canvas nodes and document content are synced to the backend via REST API.
-- Backend stores everything in a single `data/project.json` file.
+- Backend stores everything in a single `data/project.json` file (gitignored).
 - Canvas changes are debounced (1s) before syncing. Document changes similarly debounced.
+- **State snapshots**: A "Save State" button in the top-left writes the full canvas state to `STATE.json` in the project root (git-trackable). On server startup, if `STATE.json` exists, it is loaded into `data/project.json` to restore the last saved state.
 
 ### AI Features
 - **AI Suggest** (toolbar button): Select a node, click "AI Suggest" to generate a new node at the next abstraction level. Uses Gemini Flash.

@@ -1,0 +1,3 @@
+Since the server is under active development and undergoes restarts often, we would like a simple way of accomplishing data persistence while this occurs.
+
+Implement a button on the frontend that dumps the current state of the canvas into a STATE.json file in the project root directory. Additionally, upon server boots, the server should look for this STATE.json file, and if it exists then the server should use that to populate initial canvas state and send the relevant information to the frontend. This should include all text on the canvas, along with the canvas element type and position.

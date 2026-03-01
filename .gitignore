@@ -24,3 +24,7 @@ out/
 
 # Claude
 .claude/
+
+backend/data
+
+STATE.json

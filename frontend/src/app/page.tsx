@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import dynamic from "next/dynamic";
 import HealthCheck from "@/components/HealthCheck";
+import { saveState } from "@/lib/api";
 
 const Canvas = dynamic(() => import("@/components/Canvas"), { ssr: false });
 const Editor = dynamic(() => import("@/components/Editor"), { ssr: false });
@@ -10,6 +11,18 @@ const Editor = dynamic(() => import("@/components/Editor"), { ssr: false });
 export default function Home() {
   const [abstractionLevel, setAbstractionLevel] = useState(3);
   const [editorOpen, setEditorOpen] = useState(true);
+  const [saveLabel, setSaveLabel] = useState("Save State");
+
+  const handleSaveState = useCallback(async () => {
+    try {
+      await saveState();
+      setSaveLabel("Saved!");
+      setTimeout(() => setSaveLabel("Save State"), 1500);
+    } catch {
+      setSaveLabel("Error");
+      setTimeout(() => setSaveLabel("Save State"), 1500);
+    }
+  }, []);
 
   return (
     <div style={{ display: "flex", height: "100vh", overflow: "hidden" }}>
@@ -56,6 +69,29 @@ export default function Home() {
             </button>
           ))}
         </div>
+
+        {/* Save State button */}
+        <button
+          onClick={handleSaveState}
+          style={{
+            position: "absolute",
+            top: 12,
+            left: 320,
+            zIndex: 300,
+            padding: "8px 14px",
+            borderRadius: 8,
+            border: "1px solid #e5e7eb",
+            background: saveLabel === "Saved!" ? "#86efac" : "white",
+            color: saveLabel === "Saved!" ? "#14532d" : "#374151",
+            fontWeight: 600,
+            fontSize: 12,
+            cursor: "pointer",
+            boxShadow: "0 2px 10px rgba(0,0,0,0.12)",
+            transition: "background 0.2s, color 0.2s",
+          }}
+        >
+          {saveLabel}
+        </button>
 
         <HealthCheck />
       </div>
