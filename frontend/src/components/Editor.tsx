@@ -1,14 +1,23 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import * as api from "@/lib/api";
+import { BackendNode } from "@/lib/api";
 
-export default function Editor() {
+const NODE_COLORS: Record<string, { bg: string; border: string; label: string }> = {
+  vibe: { bg: "#ede9fe", border: "#c4b5fd", label: "#581c87" },
+  sketch: { bg: "#fef9c3", border: "#fcd34d", label: "#713f12" },
+  snippet: { bg: "#dcfce7", border: "#86efac", label: "#14532d" },
+};
+
+interface EditorProps {
+  nodes: BackendNode[];
+}
+
+export default function Editor({ nodes }: EditorProps) {
   const [loaded, setLoaded] = useState(false);
-  const [rewriteSnippet, setRewriteSnippet] = useState("");
-  const [isRewriting, setIsRewriting] = useState(false);
   const syncTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   const editor = useEditor({
@@ -17,7 +26,6 @@ export default function Editor() {
     content: "<p>Loading...</p>",
     onUpdate: ({ editor }) => {
       if (!loaded) return;
-      // Debounced sync to backend
       clearTimeout(syncTimeoutRef.current);
       syncTimeoutRef.current = setTimeout(() => {
         api.updateDocument(editor.getJSON());
@@ -25,7 +33,6 @@ export default function Editor() {
     },
   });
 
-  // Load document from backend
   useEffect(() => {
     if (!editor) return;
     api.fetchDocument().then((doc) => {
@@ -41,85 +48,59 @@ export default function Editor() {
     });
   }, [editor]);
 
-  const handleRewrite = useCallback(async () => {
-    if (!editor || !rewriteSnippet.trim()) return;
-
-    const { from, to } = editor.state.selection;
-    const selectedText = editor.state.doc.textBetween(from, to, " ");
-    if (!selectedText.trim()) {
-      alert("Select some text in the editor first, then click Rewrite.");
-      return;
-    }
-
-    setIsRewriting(true);
-    try {
-      const result = await api.aiRewrite(rewriteSnippet, selectedText);
-      // Replace the selection with the rewritten text
-      editor.chain().focus().deleteSelection().insertContent(result.rewritten).run();
-      setRewriteSnippet("");
-    } catch (err) {
-      console.error("Rewrite failed:", err);
-    }
-    setIsRewriting(false);
-  }, [editor, rewriteSnippet]);
-
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+    <div style={{ display: "flex", height: "100%" }}>
+      {/* Nodes column */}
       <div
         style={{
-          flex: 1,
+          width: "40%",
           overflow: "auto",
-          padding: "24px 20px",
+          padding: "12px 8px",
+          borderRight: "1px solid #e5e7eb",
+          background: "#fafafa",
+        }}
+      >
+        <div style={{ fontSize: 11, fontWeight: 600, color: "#9ca3af", marginBottom: 8, textTransform: "uppercase" }}>
+          Canvas Nodes
+        </div>
+        {nodes.length === 0 && (
+          <div style={{ fontSize: 12, color: "#9ca3af" }}>No nodes yet</div>
+        )}
+        {nodes.map((node) => {
+          const colors = NODE_COLORS[node.type] || NODE_COLORS.vibe;
+          return (
+            <div
+              key={node.id}
+              style={{
+                marginBottom: 8,
+                padding: "8px 10px",
+                borderRadius: 8,
+                background: colors.bg,
+                border: `1px solid ${colors.border}`,
+              }}
+            >
+              <div style={{ fontSize: 10, fontWeight: 700, color: colors.label, marginBottom: 2, textTransform: "uppercase" }}>
+                {node.type}
+              </div>
+              <div style={{ fontSize: 12, color: "#374151", lineHeight: 1.4, whiteSpace: "pre-wrap" }}>
+                {node.content || "(empty)"}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* TipTap editor */}
+      <div
+        style={{
+          width: "60%",
+          overflow: "auto",
+          padding: "24px 16px",
         }}
       >
         <div className="prose prose-lg max-w-none">
           <EditorContent editor={editor} />
         </div>
-      </div>
-
-      {/* Rewrite panel */}
-      <div
-        style={{
-          borderTop: "1px solid #e5e7eb",
-          padding: 12,
-          background: "#f9fafb",
-        }}
-      >
-        <div style={{ fontSize: 12, fontWeight: 600, color: "#6b7280", marginBottom: 6 }}>
-          AI Rewrite (select text above, paste a snippet reference below)
-        </div>
-        <textarea
-          value={rewriteSnippet}
-          onChange={(e) => setRewriteSnippet(e.target.value)}
-          placeholder="Paste a snippet or style reference here..."
-          style={{
-            width: "100%",
-            height: 60,
-            padding: 8,
-            borderRadius: 6,
-            border: "1px solid #d1d5db",
-            fontSize: 13,
-            resize: "none",
-            outline: "none",
-          }}
-        />
-        <button
-          onClick={handleRewrite}
-          disabled={isRewriting || !rewriteSnippet.trim()}
-          style={{
-            marginTop: 6,
-            padding: "6px 14px",
-            borderRadius: 6,
-            border: "none",
-            background: isRewriting ? "#9ca3af" : "#7c3aed",
-            color: "white",
-            fontWeight: 600,
-            fontSize: 12,
-            cursor: isRewriting ? "not-allowed" : "pointer",
-          }}
-        >
-          {isRewriting ? "Rewriting..." : "Rewrite Selection"}
-        </button>
       </div>
     </div>
   );

@@ -1,13 +1,14 @@
 # Writing Canvas — Code Overview
 
-A collaborative writing canvas app that helps authors develop ideas from high-level themes ("vibes") through sketches and snippets down to finished prose, using an infinite canvas (tldraw) and a document editor (TipTap).
+A collaborative writing canvas app that helps authors develop ideas from high-level themes ("vibes") through sketches and snippets down to finished prose, using an infinite canvas (tldraw), an LLM chat panel, and a document editor (TipTap).
 
 ## Project Structure
 
 ```
 writing_canvas/
 ├── specs/              # Product specs and requirements
-│   └── overview.md     # High-level product vision
+│   ├── overview.md     # High-level product vision
+│   └── chat_editor.md  # Chat + Editor panel spec
 ├── plans/              # Implementation plans
 ├── STATE.json          # Canvas state snapshot (git-trackable, created via Save State button)
 ├── backend/            # Python/FastAPI backend
@@ -23,22 +24,24 @@ writing_canvas/
 │       │   ├── health.py   # GET /health
 │       │   ├── nodes.py    # CRUD: GET/POST/PUT/DELETE /nodes
 │       │   ├── document.py # GET/PUT /document (TipTap JSON)
-│       │   ├── ai.py       # POST /ai/suggest, POST /ai/rewrite
+│       │   ├── ai.py       # POST /ai/suggest
+│       │   ├── chat.py     # POST /chat — streaming SSE chat endpoint (Claude Sonnet)
 │       │   └── state.py    # POST /state/save (snapshot to STATE.json)
 │       └── services/
 │           ├── storage.py  # JSON-file persistence for nodes + document + state snapshots
-│           └── ai.py       # Gemini Flash (suggest) + Claude Opus (rewrite)
+│           └── ai.py       # Gemini Flash (suggest) + Anthropic client (chat)
 ├── frontend/           # Next.js/React frontend
 │   ├── package.json
 │   ├── next.config.ts  # tldraw in serverExternalPackages
 │   └── src/
 │       ├── app/
 │       │   ├── layout.tsx      # Root layout with Geist fonts + Tailwind
-│       │   ├── page.tsx        # Single-page layout: Canvas + Editor panel + abstraction filter
+│       │   ├── page.tsx        # Single-page layout: Canvas + right panel (Chat/Editor toggle)
 │       │   └── globals.css     # Tailwind + tldraw CSS imports
 │       ├── components/
-│       │   ├── Canvas.tsx      # tldraw wrapper with custom shapes, persistence sync, AI suggest
-│       │   ├── Editor.tsx      # TipTap editor with persistence sync + AI rewrite panel
+│       │   ├── Canvas.tsx      # tldraw wrapper with custom shapes, persistence sync
+│       │   ├── ChatPanel.tsx   # LLM chat UI with SSE streaming (connected to /chat endpoint)
+│       │   ├── Editor.tsx      # TipTap editor with read-only canvas nodes column
 │       │   ├── HealthCheck.tsx # Backend connectivity indicator
 │       │   └── shapes/
 │       │       ├── index.ts            # Re-exports all shape utils
@@ -47,7 +50,7 @@ writing_canvas/
 │       │       ├── SketchShapeUtil.tsx  # Pastel yellow cards (level 2)
 │       │       └── SnippetShapeUtil.tsx # Pastel green cards (level 3)
 │       └── lib/
-│           └── api.ts  # API client for all backend endpoints
+│           └── api.ts  # API client: nodes, document, AI suggest, chat streaming, state
 ```
 
 ## Running the App
@@ -72,29 +75,28 @@ Three custom tldraw shapes at different abstraction levels:
 - **Sketch** (level 2): Characters, locations, events. Pastel yellow card with label.
 - **Snippet** (level 3): Actual prose passages or style references. Pastel green card with label.
 
-### Abstraction Level Filter
-A segmented control in the top-left of the canvas lets users filter by abstraction level (1/2/3). Shapes above the selected level are hidden (opacity 0).
-
 ### Single-Page Layout
-- Canvas fills most of the viewport.
-- A toggleable right panel (400px) contains the TipTap document editor.
-- The editor includes an "AI Rewrite" panel at the bottom.
+Two main views, switched via a segmented tab control visible in both modes:
+- **Chat view** (default): Canvas fills the viewport with a toggleable 400px chat panel on the right. The chat is an LLM conversation connected to Claude, with all canvas node text sent as system context. Session-only history (not persisted).
+- **Editor view**: Full-screen document editor (canvas is hidden). A TipTap editor takes up 60% with a read-only column on the left (40%) showing all canvas nodes as colored cards. A top bar provides the view toggle and Save State button.
 
 ### Persistence
 - Canvas nodes and document content are synced to the backend via REST API.
 - Backend stores everything in a single `data/project.json` file (gitignored).
 - Canvas changes are debounced (1s) before syncing. Document changes similarly debounced.
+- Chat messages are session-only (stored in React state, not persisted to backend).
 - **State snapshots**: A "Save State" button in the top-left writes the full canvas state to `STATE.json` in the project root (git-trackable). On server startup, if `STATE.json` exists, it is loaded into `data/project.json` to restore the last saved state.
 
 ### AI Features
-- **AI Suggest** (toolbar button): Select a node, click "AI Suggest" to generate a new node at the next abstraction level. Uses Gemini Flash.
-- **AI Rewrite** (editor panel): Select text in the editor, paste a snippet/reference, click "Rewrite Selection" to rewrite the passage in that style. Uses Claude Opus.
+- **Chat** (right panel): Conversational AI assistant with full canvas context. Uses Claude Sonnet via streaming SSE.
 
 ## Key Technical Details
 
-- **Canvas and Editor components** are loaded with `next/dynamic` + `ssr: false` since tldraw and TipTap require browser APIs.
+- **Canvas, Editor, and ChatPanel components** are loaded with `next/dynamic` + `ssr: false` since they require browser APIs.
 - **Custom shapes** use `ShapeUtil<any>` due to tldraw v4's closed type union for `TLShape`. Runtime behavior is correct.
 - **CORS** is configured on the backend to allow requests from `localhost:3000`.
 - **TipTap** uses `immediatelyRender: false` to avoid SSR hydration mismatches.
+- **Chat streaming**: Backend uses sync Anthropic SDK `messages.stream()` in a sync generator; FastAPI's `StreamingResponse` runs it in a threadpool. Frontend reads the SSE stream via `ReadableStream` + `getReader()`.
+- **Nodes polling**: `page.tsx` polls `GET /nodes` every 3s to keep the Editor's nodes column fresh.
 - **Backend deps**: FastAPI, Pydantic, Anthropic SDK, Google GenAI SDK, python-dotenv.
 - **Frontend deps**: Next.js 16 (App Router), Tailwind CSS, tldraw v4, TipTap v3 (react + starter-kit).

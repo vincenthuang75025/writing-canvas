@@ -1,0 +1,3 @@
+Instead of the current system with a canvas + a document editor on the right side, we would like the following:
+- An LLM chat conversation on the right side. It should connect to Claude on the backend and take in all the node elements' text as context
+- There's an alternate view one can toggle to, which is just a standard document editor while all the canvas node elements' text appear in a column off to the side

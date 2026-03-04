@@ -1,12 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { Editor, Tldraw, createShapeId } from "tldraw";
 import {
   VibeShapeUtil,
   SketchShapeUtil,
   SnippetShapeUtil,
-  ABSTRACTION_LEVELS,
 } from "./shapes";
 import * as api from "@/lib/api";
 
@@ -17,11 +16,7 @@ const shapeUtils = [VibeShapeUtil, SketchShapeUtil, SnippetShapeUtil];
 const CUSTOM_TYPES = ["vibe", "sketch", "snippet"] as const;
 type CustomType = (typeof CUSTOM_TYPES)[number];
 
-interface CanvasProps {
-  abstractionLevel: number;
-}
-
-export default function Canvas({ abstractionLevel }: CanvasProps) {
+export default function Canvas() {
   const editorRef = useRef<Editor | null>(null);
   const [loaded, setLoaded] = useState(false);
   const syncingRef = useRef(false);
@@ -74,7 +69,6 @@ export default function Canvas({ abstractionLevel }: CanvasProps) {
           content: string;
         };
         if (backendId) {
-          // Update existing
           await api.updateNode(backendId, {
             content: shapeProps.content,
             x: shape.x,
@@ -83,7 +77,6 @@ export default function Canvas({ abstractionLevel }: CanvasProps) {
             h: shapeProps.h,
           });
         } else {
-          // Create new
           const created = await api.createNode({
             type: shape.type as CustomType,
             content: shapeProps.content,
@@ -107,30 +100,6 @@ export default function Canvas({ abstractionLevel }: CanvasProps) {
     },
     [loaded]
   );
-
-  // Abstraction-level filtering: hide shapes above the current level
-  useEffect(() => {
-    const editor = editorRef.current;
-    if (!editor || !loaded) return;
-
-    const allShapes = editor.getCurrentPageShapes();
-    for (const shape of allShapes) {
-      if (!CUSTOM_TYPES.includes(shape.type as CustomType)) continue;
-      const level =
-        ABSTRACTION_LEVELS[shape.type as keyof typeof ABSTRACTION_LEVELS];
-      const shouldBeHidden = level > abstractionLevel;
-      const isHidden = editor.isShapeHidden(shape.id);
-      if (shouldBeHidden && !isHidden) {
-        editor.updateShape({ id: shape.id, type: shape.type as any, opacity: 0 });
-      } else if (!shouldBeHidden && isHidden) {
-        editor.updateShape({ id: shape.id, type: shape.type as any, opacity: 1 });
-      } else if (!shouldBeHidden && shape.opacity === 0) {
-        editor.updateShape({ id: shape.id, type: shape.type as any, opacity: 1 });
-      } else if (shouldBeHidden && shape.opacity !== 0) {
-        editor.updateShape({ id: shape.id, type: shape.type as any, opacity: 0 });
-      }
-    }
-  }, [abstractionLevel, loaded]);
 
   const handleMount = useCallback(
     (editor: Editor) => {
@@ -162,43 +131,6 @@ export default function Canvas({ abstractionLevel }: CanvasProps) {
         y: pagePoint.y - 60,
         props: { w: 220, h: 120, content: "" },
       });
-    },
-    []
-  );
-
-  const handleAiSuggest = useCallback(async () => {
-    const editor = editorRef.current;
-    if (!editor) return;
-    const selectedIds = editor.getSelectedShapeIds();
-    if (selectedIds.length !== 1) return;
-
-    const shape = editor.getShape(selectedIds[0]);
-    if (!shape || !CUSTOM_TYPES.includes(shape.type as CustomType)) return;
-
-    const backendId = idMapRef.current.get(shape.id);
-    if (!backendId) {
-      // Need to sync first
-      await syncToBackend(editor);
-      const newBackendId = idMapRef.current.get(shape.id);
-      if (!newBackendId) return;
-      return handleAiSuggestWithId(editor, shape, newBackendId);
-    }
-    return handleAiSuggestWithId(editor, shape, backendId);
-  }, [syncToBackend]);
-
-  const handleAiSuggestWithId = useCallback(
-    async (editor: Editor, sourceShape: any, backendId: string) => {
-      try {
-        const result = await api.aiSuggest(backendId);
-        editor.createShape({
-          type: result.type as any,
-          x: sourceShape.x + (sourceShape.props?.w ?? 220) + 40,
-          y: sourceShape.y,
-          props: { w: 240, h: 140, content: result.content },
-        });
-      } catch (err) {
-        console.error("AI suggest failed:", err);
-      }
     },
     []
   );
@@ -241,9 +173,6 @@ export default function Canvas({ abstractionLevel }: CanvasProps) {
         </button>
         <button onClick={() => addShape("snippet")} style={toolbarBtnStyle("#86efac", "#14532d")}>
           + Snippet
-        </button>
-        <button onClick={handleAiSuggest} style={toolbarBtnStyle("#93c5fd", "#1e3a5f")}>
-          AI Suggest
         </button>
       </div>
     </div>

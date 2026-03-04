@@ -78,19 +78,19 @@ export async function aiSuggest(nodeId: string): Promise<{ content: string; type
   return res.json();
 }
 
-export async function aiRewrite(
-  snippetContent: string,
-  documentSelection: string
-): Promise<{ rewritten: string }> {
-  const res = await fetch(`${API}/ai/rewrite`, {
+// --- Chat ---
+
+export interface ChatMessage {
+  role: "user" | "assistant";
+  content: string;
+}
+
+export function chatStream(messages: ChatMessage[]): Promise<Response> {
+  return fetch(`${API}/chat`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      snippet_content: snippetContent,
-      document_selection: documentSelection,
-    }),
+    body: JSON.stringify({ messages }),
   });
-  return res.json();
 }
 
 // --- State ---
