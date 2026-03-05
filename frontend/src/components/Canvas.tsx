@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useRef } from "react";
 import { Editor, Tldraw, createShapeId } from "tldraw";
 import {
   VibeShapeUtil,
@@ -18,7 +18,7 @@ type CustomType = (typeof CUSTOM_TYPES)[number];
 
 export default function Canvas() {
   const editorRef = useRef<Editor | null>(null);
-  const [loaded, setLoaded] = useState(false);
+  const loadedRef = useRef(false);
   const syncingRef = useRef(false);
   // Map from tldraw shape id string -> backend node id
   const idMapRef = useRef<Map<string, string>>(new Map());
@@ -28,7 +28,7 @@ export default function Canvas() {
     try {
       const nodes = await api.fetchNodes();
       if (nodes.length === 0) {
-        setLoaded(true);
+        loadedRef.current = true;
         return;
       }
       syncingRef.current = true;
@@ -45,16 +45,16 @@ export default function Canvas() {
       });
       editor.createShapes(shapes as any);
       syncingRef.current = false;
-      setLoaded(true);
+      loadedRef.current = true;
     } catch {
-      setLoaded(true);
+      loadedRef.current = true;
     }
   }, []);
 
   // Sync changes to backend
   const syncToBackend = useCallback(
     async (editor: Editor) => {
-      if (syncingRef.current || !loaded) return;
+      if (syncingRef.current || !loadedRef.current) return;
 
       const allShapes = editor.getCurrentPageShapes();
       const customShapes = allShapes.filter((s) =>
@@ -98,7 +98,7 @@ export default function Canvas() {
         }
       }
     },
-    [loaded]
+    []
   );
 
   const handleMount = useCallback(

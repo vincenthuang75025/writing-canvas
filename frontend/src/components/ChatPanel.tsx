@@ -107,11 +107,11 @@ export default function ChatPanel() {
           gap: 12,
         }}
       >
-        {messages.length === 0 && (
+        {/* {messages.length === 0 && (
           <div style={{ color: "#9ca3af", fontSize: 13, textAlign: "center", marginTop: 40 }}>
             Send a message to start chatting. The AI has context from your canvas nodes.
           </div>
-        )}
+        )} */}
         {messages.map((msg, i) => (
           <div
             key={i}

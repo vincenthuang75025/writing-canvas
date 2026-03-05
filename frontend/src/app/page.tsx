@@ -152,7 +152,7 @@ export default function Home() {
           </button>
         </div>
 
-        <HealthCheck />
+        {/* <HealthCheck /> */}
       </div>
 
       {/* Chat panel toggle button */}
