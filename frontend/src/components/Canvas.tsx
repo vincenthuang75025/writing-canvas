@@ -5,15 +5,15 @@ import { Editor, Tldraw, createShapeId } from "tldraw";
 import {
   VibeShapeUtil,
   SketchShapeUtil,
-  SnippetShapeUtil,
+  ExcerptShapeUtil,
 } from "./shapes";
 import * as api from "@/lib/api";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-const shapeUtils = [VibeShapeUtil, SketchShapeUtil, SnippetShapeUtil];
+const shapeUtils = [VibeShapeUtil, SketchShapeUtil, ExcerptShapeUtil];
 
-const CUSTOM_TYPES = ["vibe", "sketch", "snippet"] as const;
+const CUSTOM_TYPES = ["vibe", "sketch", "excerpt"] as const;
 type CustomType = (typeof CUSTOM_TYPES)[number];
 
 export default function Canvas() {
@@ -171,8 +171,8 @@ export default function Canvas() {
         <button onClick={() => addShape("sketch")} style={toolbarBtnStyle("#fcd34d", "#713f12")}>
           + Sketch
         </button>
-        <button onClick={() => addShape("snippet")} style={toolbarBtnStyle("#86efac", "#14532d")}>
-          + Snippet
+        <button onClick={() => addShape("excerpt")} style={toolbarBtnStyle("#86efac", "#14532d")}>
+          + Excerpt
         </button>
       </div>
     </div>

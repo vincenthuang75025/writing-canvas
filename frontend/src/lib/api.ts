@@ -2,7 +2,7 @@ const API = "http://localhost:8000";
 
 export interface BackendNode {
   id: string;
-  type: "vibe" | "sketch" | "snippet";
+  type: "vibe" | "sketch" | "excerpt";
   content: string;
   x: number;
   y: number;

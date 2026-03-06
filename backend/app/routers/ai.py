@@ -16,7 +16,7 @@ class SuggestResponse(BaseModel):
 
 
 class RewriteRequest(BaseModel):
-    snippet_content: str
+    excerpt_content: str
     document_selection: str
 
 
@@ -32,8 +32,8 @@ async def suggest(body: SuggestRequest) -> SuggestResponse:
 
     all_nodes = [n.model_dump() for n in storage.get_all_nodes()]
 
-    level_names = {"vibe": "sketch", "sketch": "snippet"}
-    target_type = level_names.get(node.type.value, "snippet")
+    level_names = {"vibe": "sketch", "sketch": "excerpt"}
+    target_type = level_names.get(node.type.value, "excerpt")
 
     content = await ai.suggest_from_node(node.type.value, node.content, all_nodes)
     return SuggestResponse(content=content, type=target_type)
@@ -46,7 +46,7 @@ async def rewrite(body: RewriteRequest) -> RewriteResponse:
     full_text = _extract_text(doc.content)
 
     rewritten = await ai.rewrite_passage(
-        body.snippet_content,
+        body.excerpt_content,
         body.document_selection,
         full_text,
     )

@@ -2,8 +2,8 @@ import { ShapeUtil, Rectangle2d, T, HTMLContainer } from "tldraw";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-export class SnippetShapeUtil extends ShapeUtil<any> {
-  static override type = "snippet" as const;
+export class ExcerptShapeUtil extends ShapeUtil<any> {
+  static override type = "excerpt" as const;
 
   static override props = {
     w: T.number,
@@ -18,7 +18,7 @@ export class SnippetShapeUtil extends ShapeUtil<any> {
     if (pending !== undefined && pending !== shape.props.content) {
       this.editor.updateShape({
         id: shape.id,
-        type: "snippet" as any,
+        type: "excerpt" as any,
         props: { content: pending },
       });
     }
@@ -90,7 +90,7 @@ export class SnippetShapeUtil extends ShapeUtil<any> {
               marginBottom: 6,
             }}
           >
-            Snippet
+            Excerpt
           </div>
           {isEditing ? (
             <textarea
@@ -102,7 +102,7 @@ export class SnippetShapeUtil extends ShapeUtil<any> {
               onBlur={(e) => {
                 this.editor.updateShape({
                   id: shape.id,
-                  type: "snippet" as any,
+                  type: "excerpt" as any,
                   props: { content: e.currentTarget.value },
                 });
                 this.pendingContent.delete(shape.id);
@@ -130,7 +130,7 @@ export class SnippetShapeUtil extends ShapeUtil<any> {
                 textOverflow: "ellipsis",
               }}
             >
-              {shape.props.content || "Double-click to write a snippet..."}
+              {shape.props.content || "Double-click to write a excerpt..."}
             </span>
           )}
         </div>

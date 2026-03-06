@@ -185,6 +185,24 @@ export default function ChatPanel() {
         >
           Send
         </button>
+        {messages.length > 0 && !isStreaming && (
+          <button
+            onClick={() => setMessages([])}
+            style={{
+              padding: "8px 12px",
+              borderRadius: 8,
+              border: "1px solid #d1d5db",
+              background: "white",
+              color: "#6b7280",
+              fontWeight: 600,
+              fontSize: 13,
+              cursor: "pointer",
+              whiteSpace: "nowrap",
+            }}
+          >
+            Clear
+          </button>
+        )}
       </div>
     </div>
   );

@@ -9,7 +9,7 @@ import { BackendNode } from "@/lib/api";
 const NODE_COLORS: Record<string, { bg: string; border: string; label: string }> = {
   vibe: { bg: "#ede9fe", border: "#c4b5fd", label: "#581c87" },
   sketch: { bg: "#fef9c3", border: "#fcd34d", label: "#713f12" },
-  snippet: { bg: "#dcfce7", border: "#86efac", label: "#14532d" },
+  excerpt: { bg: "#dcfce7", border: "#86efac", label: "#14532d" },
 };
 
 interface EditorProps {
@@ -23,6 +23,7 @@ export default function Editor({ nodes }: EditorProps) {
   const editor = useEditor({
     extensions: [StarterKit],
     immediatelyRender: false,
+    editable: true,
     content: "<p>Loading...</p>",
     onUpdate: ({ editor }) => {
       if (!loaded) return;
@@ -53,7 +54,9 @@ export default function Editor({ nodes }: EditorProps) {
       {/* Nodes column */}
       <div
         style={{
-          width: "40%",
+          width: "25%",
+          minWidth: 180,
+          maxWidth: 280,
           overflow: "auto",
           padding: "12px 8px",
           borderRight: "1px solid #e5e7eb",
@@ -93,14 +96,14 @@ export default function Editor({ nodes }: EditorProps) {
       {/* TipTap editor */}
       <div
         style={{
-          width: "60%",
+          flex: 1,
           overflow: "auto",
-          padding: "24px 16px",
+          padding: "24px 32px",
+          cursor: "text",
         }}
+        onClick={() => editor?.commands.focus()}
       >
-        <div className="prose prose-lg max-w-none">
-          <EditorContent editor={editor} />
-        </div>
+        <EditorContent editor={editor} />
       </div>
     </div>
   );

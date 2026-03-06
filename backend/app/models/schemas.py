@@ -7,14 +7,14 @@ import uuid
 class NodeType(str, Enum):
     vibe = "vibe"
     sketch = "sketch"
-    snippet = "snippet"
+    excerpt = "excerpt"
 
 
-# Abstraction level: vibe=1 (most abstract), sketch=2, snippet=3
+# Abstraction level: vibe=1 (most abstract), sketch=2, excerpt=3
 NODE_TYPE_LEVEL = {
     NodeType.vibe: 1,
     NodeType.sketch: 2,
-    NodeType.snippet: 3,
+    NodeType.excerpt: 3,
 }
 
 

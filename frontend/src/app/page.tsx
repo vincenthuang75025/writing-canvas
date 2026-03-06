@@ -10,8 +10,7 @@ const Editor = dynamic(() => import("@/components/Editor"), { ssr: false });
 const ChatPanel = dynamic(() => import("@/components/ChatPanel"), { ssr: false });
 
 export default function Home() {
-  const [panelOpen, setPanelOpen] = useState(true);
-  const [panelView, setPanelView] = useState<"chat" | "editor">("chat");
+  const [panelView, setPanelView] = useState<"canvas" | "editor">("canvas");
   const [nodes, setNodes] = useState<BackendNode[]>([]);
   const [saveLabel, setSaveLabel] = useState("Save State");
   const intervalRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
@@ -48,7 +47,7 @@ export default function Home() {
         boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
       }}
     >
-      {(["chat", "editor"] as const).map((view) => (
+      {(["canvas", "editor"] as const).map((view) => (
         <button
           key={view}
           onClick={() => setPanelView(view)}
@@ -104,9 +103,24 @@ export default function Home() {
             {saveLabel}
           </button>
         </div>
-        {/* Editor body */}
-        <div style={{ flex: 1, overflow: "hidden" }}>
-          <Editor nodes={nodes} />
+        {/* Editor body + Chat */}
+        <div style={{ flex: 1, overflow: "hidden", display: "flex" }}>
+          <div style={{ flex: 1, overflow: "hidden" }}>
+            <Editor nodes={nodes} />
+          </div>
+          <div
+            style={{
+              width: 400,
+              borderLeft: "1px solid #e5e7eb",
+              background: "white",
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
+            <div style={{ flex: 1, overflow: "hidden" }}>
+              <ChatPanel />
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -155,44 +169,20 @@ export default function Home() {
         {/* <HealthCheck /> */}
       </div>
 
-      {/* Chat panel toggle button */}
-      <button
-        onClick={() => setPanelOpen(!panelOpen)}
+      {/* Chat panel */}
+      <div
         style={{
-          position: "absolute",
-          top: 12,
-          right: panelOpen ? 412 : 12,
-          zIndex: 400,
-          padding: "8px 12px",
-          borderRadius: 8,
-          border: "1px solid #e5e7eb",
+          width: 400,
+          borderLeft: "1px solid #e5e7eb",
           background: "white",
-          fontWeight: 600,
-          fontSize: 12,
-          cursor: "pointer",
-          boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-          transition: "right 0.2s ease",
+          display: "flex",
+          flexDirection: "column",
         }}
       >
-        {panelOpen ? "Close Chat" : "Open Chat"}
-      </button>
-
-      {/* Chat panel */}
-      {panelOpen && (
-        <div
-          style={{
-            width: 400,
-            borderLeft: "1px solid #e5e7eb",
-            background: "white",
-            display: "flex",
-            flexDirection: "column",
-          }}
-        >
-          <div style={{ flex: 1, overflow: "hidden" }}>
-            <ChatPanel />
-          </div>
+        <div style={{ flex: 1, overflow: "hidden" }}>
+          <ChatPanel />
         </div>
-      )}
+      </div>
     </div>
   );
 }

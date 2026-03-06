@@ -1,4 +1,4 @@
 export { VibeShapeUtil } from "./VibeShapeUtil";
 export { SketchShapeUtil } from "./SketchShapeUtil";
-export { SnippetShapeUtil } from "./SnippetShapeUtil";
+export { ExcerptShapeUtil } from "./ExcerptShapeUtil";
 export { ABSTRACTION_LEVELS } from "./types";

@@ -8,8 +8,8 @@ anthropic_client = Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY", ""))
 
 async def suggest_from_node(node_type: str, node_content: str, all_nodes: list[dict]) -> str:
     """Use Gemini Flash to suggest a new node at the next abstraction level."""
-    level_names = {"vibe": "sketch", "sketch": "snippet"}
-    target = level_names.get(node_type, "snippet")
+    level_names = {"vibe": "sketch", "sketch": "excerpt"}
+    target = level_names.get(node_type, "excerpt")
 
     context_str = "\n".join(
         f"- [{n['type']}] {n['content']}" for n in all_nodes if n['content']
@@ -23,7 +23,7 @@ The author has the following elements on their canvas:
 They want to develop the following {node_type} into a {target}:
 "{node_content}"
 
-{"A 'sketch' is a concrete note about characters, locations, events, or plot devices that embodies the vibe." if target == "sketch" else "A 'snippet' is a short piece of actual prose, a paragraph or two, that could appear in the final piece — or a stylistic reference."}
+{"A 'sketch' is a concrete note about characters, locations, events, or plot devices that embodies the vibe." if target == "sketch" else "A 'excerpt' is a short piece of actual prose, a paragraph or two, that could appear in the final piece — or a stylistic reference."}
 
 Write a concise {target} (2-4 sentences) that naturally develops from the given {node_type}. Return ONLY the {target} text, no labels or explanation."""
 
@@ -35,11 +35,11 @@ Write a concise {target} (2-4 sentences) that naturally develops from the given 
 
 
 async def rewrite_passage(
-    snippet_content: str,
+    excerpt_content: str,
     document_selection: str,
     full_document: str,
 ) -> str:
-    """Use Claude Opus to rewrite a document passage based on a snippet/reference."""
+    """Use Claude Opus to rewrite a document passage based on a excerpt/reference."""
     message = anthropic_client.messages.create(
         model="claude-opus-4-0-20250514",
         max_tokens=1024,
@@ -57,7 +57,7 @@ They have selected this passage to rewrite:
 "{document_selection}"
 
 They want it rewritten to incorporate the style, theme, or content of this reference:
-"{snippet_content}"
+"{excerpt_content}"
 
 Rewrite ONLY the selected passage, maintaining the same approximate length and fitting naturally into the surrounding text. Return only the rewritten passage, no explanation.""",
             }
