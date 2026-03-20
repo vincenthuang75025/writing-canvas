@@ -78,6 +78,21 @@ def update_document(content: dict) -> Document:
     return project.document
 
 
+# --- Style references operations ---
+
+def get_style_references() -> list[str]:
+    return load_project().style_references
+
+
+def update_style_references(refs: list[str]) -> list[str]:
+    project = load_project()
+    # Ensure exactly 4 entries, padding with empty strings if needed
+    padded = (refs + ["", "", "", ""])[:4]
+    project.style_references = padded
+    save_project(project)
+    return project.style_references
+
+
 # --- State snapshot operations ---
 
 def save_state_snapshot():

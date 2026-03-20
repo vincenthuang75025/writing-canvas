@@ -24,6 +24,34 @@ class RewriteResponse(BaseModel):
     rewritten: str
 
 
+class InlineRewriteRequest(BaseModel):
+    selected_text: str
+    instruction: str
+
+
+class InlineRewriteResponse(BaseModel):
+    rewritten_text: str
+
+
+class StyleAnalyzeRequest(BaseModel):
+    selected_text: str
+    style_reference: str
+
+
+class StyleAnalyzeResponse(BaseModel):
+    elements: list[str]
+
+
+class StyleRewriteRequest(BaseModel):
+    selected_text: str
+    style_reference: str
+    elements: list[str]
+
+
+class StyleRewriteResponse(BaseModel):
+    rewritten_text: str
+
+
 @router.post("/suggest")
 async def suggest(body: SuggestRequest) -> SuggestResponse:
     node = storage.get_node(body.node_id)
@@ -51,6 +79,26 @@ async def rewrite(body: RewriteRequest) -> RewriteResponse:
         full_text,
     )
     return RewriteResponse(rewritten=rewritten)
+
+
+@router.post("/inline-rewrite")
+async def inline_rewrite(body: InlineRewriteRequest) -> InlineRewriteResponse:
+    rewritten = await ai.inline_rewrite(body.selected_text, body.instruction)
+    return InlineRewriteResponse(rewritten_text=rewritten)
+
+
+@router.post("/style-analyze")
+async def style_analyze(body: StyleAnalyzeRequest) -> StyleAnalyzeResponse:
+    elements = await ai.style_analyze(body.selected_text, body.style_reference)
+    return StyleAnalyzeResponse(elements=elements)
+
+
+@router.post("/style-rewrite")
+async def style_rewrite(body: StyleRewriteRequest) -> StyleRewriteResponse:
+    rewritten = await ai.style_rewrite(
+        body.selected_text, body.style_reference, body.elements
+    )
+    return StyleRewriteResponse(rewritten_text=rewritten)
 
 
 def _extract_text(tiptap_json: Any) -> str:

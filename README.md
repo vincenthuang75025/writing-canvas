@@ -1,5 +1,3 @@
-fix the doc editor
-
 multiple sessions
 
 sometimes i want to type things that are not canvas elements because they're not story elements they're eg. uncertainties or open questions mm. that's fine but it means ideally we persist those too idk if that's possible. that can be editor though
@@ -7,8 +5,21 @@ sometimes i want to type things that are not canvas elements because they're not
 note: asking for plots directly is pretty bad. asking for characters probably is too
 
 chat: in the canvas it's looking at all nodes and in the editor it's looking at whatever you highlight as well as potential nodes
-chat: needs to be primed towards suggesting / synthesizing NEW ideas
+chat: needs to be primed towards suggesting / synthesizing NEW ideas, being critical, etc
 chat: should propose several ideas and have a person review
 chat: should eventually be an agent with node creation tools
 
+also want to save chats. some ok prompts:
+- brainstorm 5 ideas related to the ones on the existing canvas but not already present (should come from a mix of media, literature, philosophy) and then, for each one, come up with a creative way in which it relates to one of the canvas elements
+- "how do you feel about the canvas" actually ends up being decent once the canvas is populated. gives some feedback and then asks questions. can def ask to be more critical and generate more qs though
+
 canvas: try an eventual forest canopy organization???
+
+some bug around creating new things when you switch tabs
+
+feel like i want other notepads for:
+- listing uncertainties
+- fleshing out character details
+for now just a big sketch note lol
+
+hm okay in the editor view i want cursor cmd k (thesaurs) and cmd l (style)

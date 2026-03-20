@@ -1,0 +1,9 @@
+The editor is not very easy to use right now as it is just a text box.
+
+We would like to make several changes:
+- Use the Tiptap React library
+- In the editor view, remove the canvas nodes list on the left and the chat on the right by default
+- Instead, on the left, there should be 4 empty textareas which fill up the entire height of the screen. These are places where the user can input style references, which should also get persisted when the user takes a snapshot to save state.
+- We want to support two AI features in the editor, inspired by Cursor IDE's Cmd+K and Cmd+L local / chat features
+- - When the user highlights some text and presses Cmd+K, a small textbox should pop up where the user can input a request for how to rewrite the highlighted text, and then an LLM should fulfill the request and show the response in the textbox (it should not overwrite the text in the editor itself)
+- - When the user highlights some text and presses Cmd+L, it should start a chat session on the right side where the user can ask the LLM to rewrite the higlighted text in the style of one of the style references. The flow should be as follows: First, there should be an LLM request where the LLM reads the highlighted text and the style reference, and reflects on the stylistic markers of the reference (diction, rhythm, form, etc), outputting a list of elements that it thinks are hallmarks of the reference. The chat should render this list as a checklist, where the user can choose to check / uncheck individual elements. Then, there should be a rewrite button where the LLM takes in the highlighted text, the style reference, and only the checked elements of the checklist, and rewrites the highlighted text based on the checklist elements, returning a rewritten version of the text in the chat (again, not overwriting the text in the editor itself).

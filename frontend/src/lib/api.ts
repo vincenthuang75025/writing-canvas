@@ -93,6 +93,72 @@ export function chatStream(messages: ChatMessage[]): Promise<Response> {
   });
 }
 
+// --- Style References ---
+
+export async function fetchStyleReferences(): Promise<string[]> {
+  const res = await fetch(`${API}/style-references`);
+  const data = await res.json();
+  return data.references;
+}
+
+export async function updateStyleReferences(references: string[]): Promise<string[]> {
+  const res = await fetch(`${API}/style-references`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ references }),
+  });
+  const data = await res.json();
+  return data.references;
+}
+
+// --- AI: Inline Rewrite (Cmd+K) ---
+
+export async function aiInlineRewrite(
+  selectedText: string,
+  instruction: string
+): Promise<string> {
+  const res = await fetch(`${API}/ai/inline-rewrite`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ selected_text: selectedText, instruction }),
+  });
+  const data = await res.json();
+  return data.rewritten_text;
+}
+
+// --- AI: Style Analyze + Rewrite (Cmd+L) ---
+
+export async function aiStyleAnalyze(
+  selectedText: string,
+  styleReference: string
+): Promise<string[]> {
+  const res = await fetch(`${API}/ai/style-analyze`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ selected_text: selectedText, style_reference: styleReference }),
+  });
+  const data = await res.json();
+  return data.elements;
+}
+
+export async function aiStyleRewrite(
+  selectedText: string,
+  styleReference: string,
+  elements: string[]
+): Promise<string> {
+  const res = await fetch(`${API}/ai/style-rewrite`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      selected_text: selectedText,
+      style_reference: styleReference,
+      elements,
+    }),
+  });
+  const data = await res.json();
+  return data.rewritten_text;
+}
+
 // --- State ---
 
 export async function saveState(): Promise<{ status: string }> {

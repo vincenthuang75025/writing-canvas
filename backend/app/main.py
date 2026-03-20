@@ -7,7 +7,7 @@ load_dotenv()
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routers import health, nodes, document, ai, state, chat
+from app.routers import health, nodes, document, ai, state, chat, style_references
 from app.services import storage
 
 
@@ -33,3 +33,4 @@ app.include_router(document.router)
 app.include_router(ai.router)
 app.include_router(state.router)
 app.include_router(chat.router)
+app.include_router(style_references.router)

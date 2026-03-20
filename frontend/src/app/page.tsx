@@ -3,17 +3,22 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
 import HealthCheck from "@/components/HealthCheck";
-import { saveState, fetchNodes, BackendNode } from "@/lib/api";
+import { saveState, fetchNodes, fetchStyleReferences, BackendNode } from "@/lib/api";
 
 const Canvas = dynamic(() => import("@/components/Canvas"), { ssr: false });
 const Editor = dynamic(() => import("@/components/Editor"), { ssr: false });
 const ChatPanel = dynamic(() => import("@/components/ChatPanel"), { ssr: false });
+const StyleChat = dynamic(() => import("@/components/StyleChat"), { ssr: false });
 
 export default function Home() {
   const [panelView, setPanelView] = useState<"canvas" | "editor">("canvas");
   const [nodes, setNodes] = useState<BackendNode[]>([]);
   const [saveLabel, setSaveLabel] = useState("Save State");
   const intervalRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
+
+  // Style chat state (Cmd+L)
+  const [styleChatText, setStyleChatText] = useState<string | null>(null);
+  const [styleRefs, setStyleRefs] = useState<string[]>(["", "", "", ""]);
 
   // Fetch nodes on mount + poll every 3s
   useEffect(() => {
@@ -22,6 +27,11 @@ export default function Home() {
     intervalRef.current = setInterval(load, 3000);
     return () => clearInterval(intervalRef.current);
   }, []);
+
+  // Fetch style references for StyleChat
+  useEffect(() => {
+    fetchStyleReferences().then(setStyleRefs).catch(() => {});
+  }, [styleChatText]); // refetch when Cmd+L opens
 
   const handleSaveState = useCallback(async () => {
     try {
@@ -32,6 +42,10 @@ export default function Home() {
       setSaveLabel("Error");
       setTimeout(() => setSaveLabel("Save State"), 1500);
     }
+  }, []);
+
+  const handleCmdL = useCallback((selectedText: string) => {
+    setStyleChatText(selectedText);
   }, []);
 
   // View toggle — always top-left
@@ -85,6 +99,9 @@ export default function Home() {
         >
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             {viewTabs}
+            <span style={{ fontSize: 11, color: "#9ca3af" }}>
+              Cmd+K: inline rewrite &nbsp;|&nbsp; Cmd+L: style rewrite
+            </span>
           </div>
           <button
             onClick={handleSaveState}
@@ -103,24 +120,28 @@ export default function Home() {
             {saveLabel}
           </button>
         </div>
-        {/* Editor body + Chat */}
+        {/* Editor body + optional StyleChat */}
         <div style={{ flex: 1, overflow: "hidden", display: "flex" }}>
           <div style={{ flex: 1, overflow: "hidden" }}>
-            <Editor nodes={nodes} />
+            <Editor onCmdL={handleCmdL} />
           </div>
-          <div
-            style={{
-              width: 400,
-              borderLeft: "1px solid #e5e7eb",
-              background: "white",
-              display: "flex",
-              flexDirection: "column",
-            }}
-          >
-            <div style={{ flex: 1, overflow: "hidden" }}>
-              <ChatPanel />
+          {styleChatText && (
+            <div
+              style={{
+                width: 380,
+                borderLeft: "1px solid #e5e7eb",
+                background: "white",
+                display: "flex",
+                flexDirection: "column",
+              }}
+            >
+              <StyleChat
+                selectedText={styleChatText}
+                styleReferences={styleRefs}
+                onClose={() => setStyleChatText(null)}
+              />
             </div>
-          </div>
+          )}
         </div>
       </div>
     );

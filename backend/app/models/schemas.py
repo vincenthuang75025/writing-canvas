@@ -56,3 +56,4 @@ class Document(BaseModel):
 class ProjectData(BaseModel):
     nodes: dict[str, CanvasNode] = {}
     document: Document = Document()
+    style_references: list[str] = Field(default_factory=lambda: ["", "", "", ""])
