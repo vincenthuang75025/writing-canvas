@@ -265,14 +265,36 @@ export default function Editor({ onCmdL }: EditorProps) {
           >
             <div
               style={{
-                fontSize: 11,
-                color: "#9ca3af",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
                 marginBottom: 6,
-                fontWeight: 600,
-                textTransform: "uppercase",
               }}
             >
-              Rewrite Selection
+              <div
+                style={{
+                  fontSize: 11,
+                  color: "#9ca3af",
+                  fontWeight: 600,
+                  textTransform: "uppercase",
+                }}
+              >
+                Rewrite Selection
+              </div>
+              <button
+                onClick={() => setCmdK(null)}
+                style={{
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  fontSize: 16,
+                  color: "#9ca3af",
+                  lineHeight: 1,
+                  padding: 0,
+                }}
+              >
+                ×
+              </button>
             </div>
             <div
               style={{

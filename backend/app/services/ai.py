@@ -100,10 +100,9 @@ Author's passage:
 Style reference:
 "{style_reference}"
 
-Identify 4-8 specific stylistic elements from the reference (e.g. diction choices, sentence rhythm, use of imagery, tone, point of view, figurative language patterns, structural techniques, etc.).
+Identify 4-8 stylistic elements from the reference (e.g. diction choices, sentence rhythm, use of imagery, tone, point of view, figurative language patterns, structural techniques, etc.).
 
-Return your answer as a JSON array of short strings, each describing one stylistic element. Example format:
-["Sparse, clipped diction with monosyllabic words", "Short declarative sentences", "Concrete sensory imagery over abstraction"]
+Return your answer as a JSON array of strings, each describing one stylistic element, eg. ["Style element 1", "Style element 2"].
 
 Return ONLY the JSON array, nothing else.""",
             }
@@ -140,7 +139,7 @@ Passage to rewrite:
 Style reference for context:
 "{style_reference}"
 
-Apply ONLY these stylistic elements:
+These are the key stylistic elements from the reference that should be applied:
 {elements_str}
 
 Rewrite the passage maintaining its core meaning and content, but transforming its style according to the listed elements. Return ONLY the rewritten passage, no explanation.""",
