@@ -26,11 +26,12 @@ class RewriteResponse(BaseModel):
 
 class InlineRewriteRequest(BaseModel):
     selected_text: str
-    instruction: str
+    paragraph_context: str
+    note: str
 
 
 class InlineRewriteResponse(BaseModel):
-    rewritten_text: str
+    alternatives: list[str]
 
 
 class StyleAnalyzeRequest(BaseModel):
@@ -83,8 +84,8 @@ async def rewrite(body: RewriteRequest) -> RewriteResponse:
 
 @router.post("/inline-rewrite")
 async def inline_rewrite(body: InlineRewriteRequest) -> InlineRewriteResponse:
-    rewritten = await ai.inline_rewrite(body.selected_text, body.instruction)
-    return InlineRewriteResponse(rewritten_text=rewritten)
+    alternatives = await ai.inline_rewrite(body.selected_text, body.paragraph_context, body.note)
+    return InlineRewriteResponse(alternatives=alternatives)
 
 
 @router.post("/style-analyze")

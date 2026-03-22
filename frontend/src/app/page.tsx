@@ -99,9 +99,6 @@ export default function Home() {
         >
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             {viewTabs}
-            <span style={{ fontSize: 11, color: "#9ca3af" }}>
-              Cmd+K: inline rewrite &nbsp;|&nbsp; Cmd+L: style rewrite
-            </span>
           </div>
           <button
             onClick={handleSaveState}

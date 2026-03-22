@@ -7,10 +7,11 @@ import * as api from "@/lib/api";
 
 interface CmdKState {
   text: string;
+  paragraphContext: string;
   from: number;
   to: number;
-  instruction: string;
-  result: string | null;
+  note: string;
+  alternatives: string[] | null;
   loading: boolean;
   top: number;
   left: number;
@@ -108,6 +109,11 @@ export default function Editor({ onCmdL }: EditorProps) {
     const text = editor.state.doc.textBetween(from, to, " ");
     if (!text.trim()) return;
 
+    // Extract the surrounding paragraph for context
+    const resolvedFrom = editor.state.doc.resolve(from);
+    const paragraphNode = resolvedFrom.parent;
+    const paragraphContext = paragraphNode.textContent || text;
+
     // Get position for the popup
     const coords = editor.view.coordsAtPos(from);
     const containerRect = editorContainerRef.current?.getBoundingClientRect();
@@ -116,10 +122,11 @@ export default function Editor({ onCmdL }: EditorProps) {
 
     setCmdK({
       text,
+      paragraphContext,
       from,
       to,
-      instruction: "",
-      result: null,
+      note: "",
+      alternatives: null,
       loading: false,
       top,
       left,
@@ -161,15 +168,15 @@ export default function Editor({ onCmdL }: EditorProps) {
 
   // Cmd+K submit
   const handleCmdKSubmit = useCallback(async () => {
-    if (!cmdK || !cmdK.instruction.trim() || cmdK.loading) return;
+    if (!cmdK || !cmdK.note.trim() || cmdK.loading) return;
     setCmdK((prev) => (prev ? { ...prev, loading: true } : null));
     try {
-      const result = await api.aiInlineRewrite(cmdK.text, cmdK.instruction);
-      setCmdK((prev) => (prev ? { ...prev, result, loading: false } : null));
+      const alternatives = await api.aiInlineRewrite(cmdK.text, cmdK.paragraphContext, cmdK.note);
+      setCmdK((prev) => (prev ? { ...prev, alternatives, loading: false } : null));
     } catch (err) {
       console.error("Inline rewrite error:", err);
       setCmdK((prev) =>
-        prev ? { ...prev, result: "Error — please try again.", loading: false } : null
+        prev ? { ...prev, alternatives: [], loading: false } : null
       );
     }
   }, [cmdK]);
@@ -279,7 +286,7 @@ export default function Editor({ onCmdL }: EditorProps) {
                   textTransform: "uppercase",
                 }}
               >
-                Rewrite Selection
+                Suggest Alternatives
               </div>
               <button
                 onClick={() => setCmdK(null)}
@@ -299,29 +306,24 @@ export default function Editor({ onCmdL }: EditorProps) {
             <div
               style={{
                 fontSize: 12,
-                color: "#6b7280",
+                color: "#374151",
                 marginBottom: 8,
                 padding: "4px 8px",
                 background: "#f9fafb",
                 borderRadius: 6,
-                maxHeight: 60,
-                overflow: "hidden",
-                whiteSpace: "pre-wrap",
                 lineHeight: 1.4,
               }}
             >
-              {cmdK.text.length > 150
-                ? cmdK.text.slice(0, 150) + "..."
-                : cmdK.text}
+              <span style={{ fontWeight: 600 }}>&ldquo;{cmdK.text}&rdquo;</span>
             </div>
             <div style={{ display: "flex", gap: 6 }}>
               <input
                 ref={cmdKInputRef}
                 type="text"
-                value={cmdK.instruction}
+                value={cmdK.note}
                 onChange={(e) =>
                   setCmdK((prev) =>
-                    prev ? { ...prev, instruction: e.target.value } : null
+                    prev ? { ...prev, note: e.target.value } : null
                   )
                 }
                 onKeyDown={(e) => {
@@ -333,7 +335,7 @@ export default function Editor({ onCmdL }: EditorProps) {
                     setCmdK(null);
                   }
                 }}
-                placeholder="How should this be rewritten?"
+                placeholder="What's wrong with this?"
                 disabled={cmdK.loading}
                 style={{
                   flex: 1,
@@ -347,20 +349,20 @@ export default function Editor({ onCmdL }: EditorProps) {
               />
               <button
                 onClick={handleCmdKSubmit}
-                disabled={cmdK.loading || !cmdK.instruction.trim()}
+                disabled={cmdK.loading || !cmdK.note.trim()}
                 style={{
                   padding: "6px 12px",
                   borderRadius: 6,
                   border: "none",
                   background:
-                    cmdK.loading || !cmdK.instruction.trim()
+                    cmdK.loading || !cmdK.note.trim()
                       ? "#d1d5db"
                       : "#ede9fe",
-                  color: cmdK.loading || !cmdK.instruction.trim() ? "white" : "#6d28d9",
+                  color: cmdK.loading || !cmdK.note.trim() ? "white" : "#6d28d9",
                   fontWeight: 600,
                   fontSize: 12,
                   cursor:
-                    cmdK.loading || !cmdK.instruction.trim()
+                    cmdK.loading || !cmdK.note.trim()
                       ? "not-allowed"
                       : "pointer",
                   whiteSpace: "nowrap",
@@ -369,68 +371,46 @@ export default function Editor({ onCmdL }: EditorProps) {
                 {cmdK.loading ? "..." : "Go"}
               </button>
             </div>
-            {cmdK.result && (
-              <>
-                <div
-                  style={{
-                    marginTop: 8,
-                    padding: "8px 12px",
-                    background: "#f0fdf4",
-                    borderRadius: 6,
-                    border: "1px solid #86efac",
-                    fontSize: 12,
-                    lineHeight: 1.5,
-                    whiteSpace: "pre-wrap",
-                    color: "#374151",
-                  }}
-                >
-                  {cmdK.result}
-                </div>
-                <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
+            {cmdK.alternatives && cmdK.alternatives.length > 0 && (
+              <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 4 }}>
+                {cmdK.alternatives.map((alt, i) => (
                   <button
+                    key={i}
                     onClick={() => {
                       if (editor && cmdK) {
                         editor
                           .chain()
                           .focus()
                           .setTextSelection({ from: cmdK.from, to: cmdK.to })
-                          .insertContent(cmdK.result!)
+                          .insertContent(alt.split(" (")[0])
                           .run();
                       }
                       setCmdK(null);
                     }}
                     style={{
-                      flex: 1,
-                      padding: "6px 12px",
+                      padding: "6px 10px",
                       borderRadius: 6,
-                      border: "none",
-                      background: "#dcfce7",
-                      color: "#166534",
-                      fontWeight: 600,
+                      border: "1px solid #e5e7eb",
+                      background: "white",
                       fontSize: 12,
+                      color: "#374151",
                       cursor: "pointer",
+                      textAlign: "left",
+                      lineHeight: 1.4,
+                      transition: "background 0.1s",
                     }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = "#dcfce7")}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = "white")}
                   >
-                    Accept
+                    {alt}
                   </button>
-                  <button
-                    onClick={() => setCmdK(null)}
-                    style={{
-                      flex: 1,
-                      padding: "6px 12px",
-                      borderRadius: 6,
-                      border: "none",
-                      background: "#fee2e2",
-                      color: "#991b1b",
-                      fontWeight: 600,
-                      fontSize: 12,
-                      cursor: "pointer",
-                    }}
-                  >
-                    Reject
-                  </button>
-                </div>
-              </>
+                ))}
+              </div>
+            )}
+            {cmdK.alternatives && cmdK.alternatives.length === 0 && (
+              <div style={{ marginTop: 8, fontSize: 12, color: "#9ca3af" }}>
+                No alternatives found. Try a different note.
+              </div>
             )}
           </div>
         )}

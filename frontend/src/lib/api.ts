@@ -115,15 +115,16 @@ export async function updateStyleReferences(references: string[]): Promise<strin
 
 export async function aiInlineRewrite(
   selectedText: string,
-  instruction: string
-): Promise<string> {
+  paragraphContext: string,
+  note: string
+): Promise<string[]> {
   const res = await fetch(`${API}/ai/inline-rewrite`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ selected_text: selectedText, instruction }),
+    body: JSON.stringify({ selected_text: selectedText, paragraph_context: paragraphContext, note }),
   });
   const data = await res.json();
-  return data.rewritten_text;
+  return data.alternatives;
 }
 
 // --- AI: Style Analyze + Rewrite (Cmd+L) ---

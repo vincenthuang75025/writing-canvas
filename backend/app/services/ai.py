@@ -67,21 +67,37 @@ Rewrite ONLY the selected passage, maintaining the same approximate length and f
     return message.content[0].text.strip()
 
 
-async def inline_rewrite(selected_text: str, instruction: str) -> str:
-    """Use Gemini Flash for a quick inline rewrite based on user instruction."""
-    prompt = f"""You are a creative writing assistant. The author has selected the following text from their document:
+async def inline_rewrite(selected_text: str, paragraph_context: str, note: str) -> list[str]:
+    """Use Gemini Flash to suggest alternative words/phrases for a highlighted selection."""
+    prompt = f"""You are a creative writing assistant. The author is working on the following paragraph:
 
-"{selected_text}"
+"{paragraph_context}"
 
-They want you to rewrite it with this instruction: "{instruction}"
+They have highlighted the word/phrase "{selected_text}" and are dissatisfied with it. Their note: "{note}"
 
-Return ONLY the rewritten text, no explanation or labels."""
+Suggest 2-3 alternative words or phrases that could replace "{selected_text}" in the context of this paragraph. Each alternative should fit naturally into the surrounding text, with a brief explanation of what the alternative tries to achieve.
 
-    response = gemini_client.models.generate_content(
-        model="gemini-2.0-flash",
-        contents=prompt,
+Return your answer as a JSON array of strings, e.g. ["alternative 1 (explanation)", "alternative 2 (explanation)", ...].
+Return ONLY the JSON array, nothing else."""
+
+    response = anthropic_client.messages.create(
+        model="claude-sonnet-4-20250514",
+        max_tokens=1024,
+        messages=[
+            {
+                "role": "user",
+                "content": prompt,
+            }
+        ],
     )
-    return response.text.strip()
+    raw = response.content[0].text.strip()
+    try:
+        alternatives = json.loads(raw)
+        if isinstance(alternatives, list):
+            return [str(a) for a in alternatives]
+    except json.JSONDecodeError:
+        pass
+    return [line.strip().lstrip("- ") for line in raw.split("\n") if line.strip()]
 
 
 async def style_analyze(selected_text: str, style_reference: str) -> list[str]:
@@ -92,17 +108,20 @@ async def style_analyze(selected_text: str, style_reference: str) -> list[str]:
         messages=[
             {
                 "role": "user",
-                "content": f"""You are a literary analyst. Compare the following passage from the author's document with a style reference, and identify the key stylistic markers of the reference that could be applied to the passage.
+                "content": f"""Consider the following piece of text, which is meant to be edited:
 
-Author's passage:
-"{selected_text}"
+<begin_text>
+{selected_text}
+<end_text>
 
-Style reference:
-"{style_reference}"
+We are trying to keep the subject matter and change the style to match the following:
+<begin_style>
+{style_reference}
+<end_style>
 
-Identify 4-8 stylistic elements from the reference (e.g. diction choices, sentence rhythm, use of imagery, tone, point of view, figurative language patterns, structural techniques, etc.).
+Reflect on the stylistic markers of the style reference - diction, rhythm, form, and so on, including where it differs from the existing text.
 
-Return your answer as a JSON array of strings, each describing one stylistic element, eg. ["Style element 1", "Style element 2"].
+Return your answer as a JSON array of strings, each a couple sentences describing one stylistic element, eg. ["Style element 1", "Style element 2"].
 
 Return ONLY the JSON array, nothing else.""",
             }
@@ -131,18 +150,21 @@ async def style_rewrite(
         messages=[
             {
                 "role": "user",
-                "content": f"""You are a skilled creative writing editor. Rewrite the following passage applying specific stylistic elements drawn from a reference.
+                "content": f"""Consider the following piece of text, which is meant to be edited:
 
-Passage to rewrite:
-"{selected_text}"
+<begin_text>
+{selected_text}
+<end_text>
 
-Style reference for context:
-"{style_reference}"
+We are trying to keep the subject matter and change the style to match the following:
+<begin_style>
+{style_reference}
+<end_style>
 
-These are the key stylistic elements from the reference that should be applied:
+The author has reflected on the key stylistic elements they like from the reference, and decided to focus on the following:
 {elements_str}
 
-Rewrite the passage maintaining its core meaning and content, but transforming its style according to the listed elements. Return ONLY the rewritten passage, no explanation.""",
+Rewrite the existing text to match the stylistic reference elements while keeping the subject matter unchanged. Return ONLY the rewritten passage, no explanation.""",
             }
         ],
     )
